@@ -2,6 +2,7 @@ var cheerio = require("cheerio"),
     fs = require("fs"),
     _ = require("/usr/local/lib/node_modules/underscore");
 
+//from http://stackoverflow.com/questions/5827612/node-js-fs-readdir-recursive-directory-search
 var walk = function(dir, done) {
   var results = [];
   fs.readdir(dir, function(err, list) {
@@ -31,7 +32,7 @@ var writePath = function(path, contents) {
   });
 };
 
-module.exports = function(dir, func) {
+module.exports = function(dir, func, stringFunc) {
   walk(dir, function(err, list) {
     if(err) throw err;
     list = _.filter(list, function(name) {
@@ -40,6 +41,7 @@ module.exports = function(dir, func) {
     _.each(list, function(fileName) {
       fs.readFile(fileName, "utf8", function(err, data) {
         if(err) throw err;
+        if(stringFunc) data = stringFunc(data);
         var $ = cheerio.load(data, {recognizeSelfClosing: true});
         var write = _.partial(writePath, fileName);
         func.call(cheerio, $, write);
