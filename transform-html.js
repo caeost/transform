@@ -32,20 +32,38 @@ var writePath = function(path, contents) {
   });
 };
 
+var process = function(list, func, stringFunc, next) {
+  var done = _.after(list.length, next);
+  _.each(list, function(fileName) {
+    fs.readFile(fileName, "utf8", function(err, data) {
+      if(err) throw err;
+      if(stringFunc) data = stringFunc(data);
+      var $ = cheerio.load(data, {recognizeSelfClosing: true});
+      var write = _.partial(writePath, fileName);
+      func.call(cheerio, $, write, fileName);
+      done();
+    });
+  });
+};
+
 module.exports = function(dir, func, stringFunc) {
   walk(dir, function(err, list) {
     if(err) throw err;
     list = _.filter(list, function(name) {
       return /\.html$/.test(name);
     });
-    _.each(list, function(fileName) {
-      fs.readFile(fileName, "utf8", function(err, data) {
-        if(err) throw err;
-        if(stringFunc) data = stringFunc(data);
-        var $ = cheerio.load(data, {recognizeSelfClosing: true});
-        var write = _.partial(writePath, fileName);
-        func.call(cheerio, $, write);
-      });
-    });
+    var fileProcess = _.partial(process, _, func, stringFunc)
+
+    var processList = _.first(list, 250);
+    var remaining = _.rest(list, 250);
+
+    var loop = function() {
+      processList = _.first(remaining, 250);
+      remaining = _.rest(remaining, 250);
+      if(processList.length) {
+        fileProcess(processList, loop);
+      }
+    };
+    fileProcess(processList, loop);
   });
- };
+};
