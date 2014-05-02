@@ -54,12 +54,12 @@ module.exports = function(dir, func, stringFunc) {
     });
     var fileProcess = _.partial(process, _, func, stringFunc)
 
-    var processList = _.first(list, 250);
-    var remaining = _.rest(list, 250);
+    var processList = _.first(list, 150);
+    var remaining = _.rest(list, 150);
 
     var loop = function() {
-      processList = _.first(remaining, 250);
-      remaining = _.rest(remaining, 250);
+      processList = _.first(remaining, 150);
+      remaining = _.rest(remaining, 150);
       if(processList.length) {
         fileProcess(processList, loop);
       }
